@@ -20,3 +20,10 @@ __pycache__/
 
 # Large/raw datasets
 data/raw/*
+models/*.onnx
+
+# AWS/Lambda deployment artifacts
+*.zip
+lambda-package/
+lambda-s3-package/
+lambda/*.onnx
