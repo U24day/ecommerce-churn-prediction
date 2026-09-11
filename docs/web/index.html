@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChurnGuard AI • Enterprise Churn Intelligence & Retention Engine</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app-wrapper">
+
+    <!-- Top Navigation Header -->
+    <header class="navbar">
+        <div class="brand-group">
+            <div class="brand-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <div>
+                <div class="brand-title">
+                    ChurnGuard <span>AI</span>
+                    <span class="version-tag">v2.0 • ONNX</span>
+                </div>
+                <div class="brand-subtitle">Real-Time E-Commerce Customer Retention & Risk Engine</div>
+            </div>
+        </div>
+
+        <div class="header-status-group">
+            <div class="status-pill online">
+                <span class="pulse-dot"></span>
+                <span>Inference Active</span>
+            </div>
+            <div class="arch-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+                <span>AWS Serverless</span>
+            </div>
+            <div class="latency-pill" id="latencyIndicator">
+                ⚡ ~1.1ms Latency
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="view-tabs">
+        <button type="button" class="tab-btn active" id="tabInference" data-view="inferenceView">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24M14.83 9.17l4.24-4.24M14.83 14.83l4.24 4.24M9.17 14.83l-4.24 4.24"/></svg>
+            Live Risk Prediction
+        </button>
+        <button type="button" class="tab-btn" id="tabBenchmarks" data-view="benchmarksView">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            Model Benchmarks & Metrics
+        </button>
+        <button type="button" class="tab-btn" id="tabArchitecture" data-view="architectureView">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+            Serverless Architecture
+        </button>
+    </div>
+
+    <!-- MAIN VIEW: INFERENCE DASHBOARD -->
+    <div id="inferenceView" class="view-content active">
+        <main class="dashboard-grid">
+
+            <!-- LEFT: CUSTOMER FORM & PRESETS -->
+            <section class="card input-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Customer Profile & Telemetry</h2>
+                        <p>Simulate customer transaction and behavioral parameters</p>
+                    </div>
+                    <button type="button" id="randomizeBtn" class="action-btn-sm" title="Randomize values">
+                        🎲 Randomize
+                    </button>
+                </div>
+
+                <!-- One-Click Personas -->
+                <div class="persona-section">
+                    <div class="persona-header">
+                        <span>⚡ QUICK TEST PERSONAS</span>
+                        <small>Click to auto-populate customer profile</small>
+                    </div>
+                    <div class="persona-chips-grid">
+                        <button type="button" class="persona-chip danger" data-persona="high_risk">
+                            <span class="badge-dot red"></span>
+                            <div>
+                                <strong>High Churn Risk</strong>
+                                <span>180d Inactive • 9 Tickets</span>
+                            </div>
+                        </button>
+                        <button type="button" class="persona-chip warning" data-persona="medium_risk">
+                            <span class="badge-dot orange"></span>
+                            <div>
+                                <strong>Moderate Risk</strong>
+                                <span>65d Inactive • 3 Tickets</span>
+                            </div>
+                        </button>
+                        <button type="button" class="persona-chip success" data-persona="loyal_vip">
+                            <span class="badge-dot green"></span>
+                            <div>
+                                <strong>Loyal VIP</strong>
+                                <span>8d Inactive • Gold Tier</span>
+                            </div>
+                        </button>
+                        <button type="button" class="persona-chip neutral" data-persona="new_user">
+                            <span class="badge-dot blue"></span>
+                            <div>
+                                <strong>New Customer</strong>
+                                <span>1 Month • 2 Orders</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Form -->
+                <form id="predictionForm" class="form-container">
+                    <div class="form-grid">
+
+                        <!-- Customer ID -->
+                        <div class="field-group">
+                            <label for="customer_id">
+                                <span class="field-icon">🆔</span> Customer ID
+                            </label>
+                            <input type="number" id="customer_id" value="100001" required>
+                        </div>
+
+                        <!-- Age -->
+                        <div class="field-group">
+                            <label for="age">
+                                <span class="field-icon">🎂</span> Age
+                            </label>
+                            <input type="number" id="age" value="35" min="18" max="100" required>
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="field-group">
+                            <label for="gender">
+                                <span class="field-icon">⚧</span> Gender
+                            </label>
+                            <select id="gender">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+
+                        <!-- City -->
+                        <div class="field-group">
+                            <label for="city">
+                                <span class="field-icon">📍</span> City
+                            </label>
+                            <select id="city">
+                                <option value="Delhi">Delhi</option>
+                                <option value="Mumbai">Mumbai</option>
+                                <option value="Bangalore">Bangalore</option>
+                                <option value="Chennai">Chennai</option>
+                                <option value="Hyderabad">Hyderabad</option>
+                                <option value="Kolkata">Kolkata</option>
+                                <option value="Pune">Pune</option>
+                            </select>
+                        </div>
+
+                        <!-- Tenure Months -->
+                        <div class="field-group">
+                            <label for="tenure_months">
+                                <span class="field-icon">⏳</span> Tenure (Months)
+                            </label>
+                            <input type="number" id="tenure_months" value="24" min="0" max="120" required>
+                        </div>
+
+                        <!-- Avg Order Value -->
+                        <div class="field-group">
+                            <label for="avg_order_value">
+                                <span class="field-icon">💰</span> Avg Order Value (₹)
+                            </label>
+                            <input type="number" id="avg_order_value" value="4500" min="0" step="50" required>
+                        </div>
+
+                        <!-- Total Orders -->
+                        <div class="field-group">
+                            <label for="total_orders">
+                                <span class="field-icon">📦</span> Total Orders
+                            </label>
+                            <input type="number" id="total_orders" value="120" min="0" required>
+                        </div>
+
+                        <!-- Last Purchase Days Ago -->
+                        <div class="field-group">
+                            <label for="last_purchase_days_ago">
+                                <span class="field-icon">🗓️</span> Last Purchase (Days Ago)
+                            </label>
+                            <input type="number" id="last_purchase_days_ago" value="180" min="0" required>
+                        </div>
+
+                        <!-- Support Tickets -->
+                        <div class="field-group">
+                            <label for="support_tickets">
+                                <span class="field-icon">🎫</span> Support Tickets
+                            </label>
+                            <input type="number" id="support_tickets" value="10" min="0" required>
+                        </div>
+
+                        <!-- Subscription Type -->
+                        <div class="field-group">
+                            <label for="subscription_type">
+                                <span class="field-icon">⭐</span> Subscription Tier
+                            </label>
+                            <select id="subscription_type">
+                                <option value="Basic">Basic</option>
+                                <option value="Silver">Silver</option>
+                                <option value="Gold" selected>Gold</option>
+                                <option value="Platinum">Platinum</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" id="predictButton" class="cta-predict-btn">
+                        <span class="btn-text">Run Churn Prediction</span>
+                        <svg class="btn-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                    </button>
+                </form>
+            </section>
+
+            <!-- RIGHT: PREDICTION RESULTS & INTELLIGENCE -->
+            <section class="card output-card">
+                <div class="card-header">
+                    <div>
+                        <h2>Retention Intelligence</h2>
+                        <p>Probability scoring and automated prescriptive intervention</p>
+                    </div>
+                    <div class="model-pill">
+                        <span class="model-type">Random Forest (ONNX)</span>
+                    </div>
+                </div>
+
+                <!-- Dynamic Result Container -->
+                <div id="result" class="result-container">
+                    <div class="result-placeholder">
+                        <div class="radar-pulse-icon">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>
+                                <path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 8a2 2 0 1 1 2-2 2 2 0 0 1-2 2z"/>
+                            </svg>
+                        </div>
+                        <h3>Engine Ready</h3>
+                        <p>Select a persona preset or modify values, then click <strong>Run Churn Prediction</strong> to evaluate risk.</p>
+                    </div>
+                </div>
+
+                <!-- Financial ROI & Revenue Savings Card -->
+                <div id="financialRoi" class="financial-roi-section" style="display: none;">
+                    <div class="section-subheading roi-header">
+                        <div>
+                            <h3>💰 Revenue Impact & Intervention ROI</h3>
+                            <p>Customer Lifetime Value (LTV) at risk vs proactive retention campaign cost</p>
+                        </div>
+                        <span class="roi-badge" id="roiBadge">+0% ROI</span>
+                    </div>
+
+                    <div class="roi-stats-grid">
+                        <div class="roi-box danger">
+                            <span class="roi-label">Annual Gross Loss at Risk</span>
+                            <strong id="roiLossAtRisk" class="roi-val">₹0</strong>
+                            <small id="roiLtvNote">Est. LTV: ₹0/yr</small>
+                        </div>
+                        <div class="roi-box warning">
+                            <span class="roi-label">Intervention Budget</span>
+                            <strong id="roiInterventionCost" class="roi-val">₹0</strong>
+                            <small>Targeted Voucher & CS</small>
+                        </div>
+                        <div class="roi-box success">
+                            <span class="roi-label">Expected Net Savings</span>
+                            <strong id="roiNetSavings" class="roi-val">₹0</strong>
+                            <small>Net Protected Revenue</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Drivers Breakdown -->
+                <div id="riskDrivers" class="risk-drivers-section" style="display: none;">
+                    <div class="section-subheading">
+                        <h3>🔍 Key Risk Attribution Drivers</h3>
+                        <p>Feature contribution weights towards churn risk</p>
+                    </div>
+                    <div class="driver-bars">
+                        <div class="driver-item">
+                            <div class="driver-label">
+                                <span>Purchase Inactivity (Recency)</span>
+                                <strong id="recencyDriverScore">85%</strong>
+                            </div>
+                            <div class="driver-track"><div id="recencyDriverBar" class="driver-fill red" style="width: 85%;"></div></div>
+                        </div>
+                        <div class="driver-item">
+                            <div class="driver-label">
+                                <span>Support Friction (Tickets / Order)</span>
+                                <strong id="supportDriverScore">70%</strong>
+                            </div>
+                            <div class="driver-track"><div id="supportDriverBar" class="driver-fill orange" style="width: 70%;"></div></div>
+                        </div>
+                        <div class="driver-item">
+                            <div class="driver-label">
+                                <span>Account Tenure Vulnerability</span>
+                                <strong id="tenureDriverScore">45%</strong>
+                            </div>
+                            <div class="driver-track"><div id="tenureDriverBar" class="driver-fill blue" style="width: 45%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescriptive Retention Playbook -->
+                <div id="retentionPlan" class="retention-plan-section" style="display: none;">
+                    <div class="section-subheading">
+                        <h3>💡 Prescriptive Retention Playbook</h3>
+                        <p>Automated business actions recommended for this profile</p>
+                    </div>
+                    <div id="retentionActionsList" class="retention-actions-list">
+                        <!-- Populated by script.js -->
+                    </div>
+                </div>
+
+                <!-- Live Behavioral Signals Ticker -->
+                <div class="signals-summary">
+                    <div class="signal-card">
+                        <div class="sig-icon">🗓️</div>
+                        <div class="sig-info">
+                            <span>Recency</span>
+                            <strong id="recencyValue">180 days</strong>
+                        </div>
+                    </div>
+                    <div class="signal-card">
+                        <div class="sig-icon">🎫</div>
+                        <div class="sig-info">
+                            <span>Support Tickets</span>
+                            <strong id="supportValue">10 tickets</strong>
+                        </div>
+                    </div>
+                    <div class="signal-card">
+                        <div class="sig-icon">⏳</div>
+                        <div class="sig-info">
+                            <span>Tenure</span>
+                            <strong id="tenureValue">24 months</strong>
+                        </div>
+                    </div>
+                    <div class="signal-card">
+                        <div class="sig-icon">📦</div>
+                        <div class="sig-info">
+                            <span>Orders</span>
+                            <strong id="ordersValue">120</strong>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <!-- TAB 2: MODEL BENCHMARKS VIEW -->
+    <div id="benchmarksView" class="view-content">
+        <section class="card benchmark-card">
+            <div class="card-header">
+                <div>
+                    <h2>Empirical Model Benchmarks (200,000 Records)</h2>
+                    <p>Comparison of 6 classification architectures evaluated on 80/20 stratified test split</p>
+                </div>
+                <div class="eval-tag">Dataset: 200k Rows • 23 Features</div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="benchmark-table">
+                    <thead>
+                        <tr>
+                            <th>Model Architecture</th>
+                            <th>Artifact Size</th>
+                            <th>Latency (1k req)</th>
+                            <th>ROC-AUC</th>
+                            <th>Recall (0.50)</th>
+                            <th>Recall (0.30)</th>
+                            <th>F1 Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Logistic Regression</strong> (Baseline)</td>
+                            <td>&lt; 1 MB</td>
+                            <td>0.09 ms</td>
+                            <td>0.6687</td>
+                            <td>33.36%</td>
+                            <td>81.31%</td>
+                            <td>0.5773</td>
+                        </tr>
+                        <tr class="highlight-row current">
+                            <td>
+                                <strong>Random Forest (Current Production)</strong>
+                                <span class="row-badge current">Current Model</span>
+                            </td>
+                            <td>49.21 MB</td>
+                            <td>26.41 ms</td>
+                            <td>0.6793</td>
+                            <td>31.17%</td>
+                            <td>82.69%</td>
+                            <td>0.5831</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Random Forest (Pruned)</strong></td>
+                            <td>3.65 MB <span class="badge-good">-93%</span></td>
+                            <td>13.55 ms</td>
+                            <td>0.6795</td>
+                            <td>67.07%</td>
+                            <td>96.39%</td>
+                            <td>0.5660</td>
+                        </tr>
+                        <tr class="highlight-row best">
+                            <td>
+                                <strong>LightGBM</strong>
+                                <span class="row-badge best">Top Scaler</span>
+                            </td>
+                            <td>0.50 MB <span class="badge-good">-99%</span></td>
+                            <td>1.60 ms</td>
+                            <td>0.6792</td>
+                            <td>66.01%</td>
+                            <td>94.48%</td>
+                            <td>0.5709</td>
+                        </tr>
+                        <tr class="highlight-row best">
+                            <td>
+                                <strong>XGBoost</strong>
+                                <span class="row-badge best">Fastest</span>
+                            </td>
+                            <td>0.40 MB <span class="badge-good">-99.2%</span></td>
+                            <td><strong>1.14 ms</strong></td>
+                            <td>0.6796</td>
+                            <td>66.16%</td>
+                            <td>94.37%</td>
+                            <td>0.5706</td>
+                        </tr>
+                        <tr>
+                            <td><strong>HistGradientBoosting</strong> (Scikit-learn)</td>
+                            <td><strong>0.22 MB</strong></td>
+                            <td>2.33 ms</td>
+                            <td><strong>0.6806</strong></td>
+                            <td>66.43%</td>
+                            <td>94.86%</td>
+                            <td><strong>0.5710</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="benchmark-highlights">
+                <div class="highlight-box">
+                    <div class="hl-number">99.5%</div>
+                    <div class="hl-title">Model Size Reduction</div>
+                    <p>Shrunk from 49.2 MB down to 0.22 MB, eliminating AWS Lambda cold start delays.</p>
+                </div>
+                <div class="highlight-box">
+                    <div class="hl-number">23x</div>
+                    <div class="hl-title">Inference Speedup</div>
+                    <p>XGBoost executes 1,000 predictions in just 1.14 ms compared to 26.4 ms for Random Forest.</p>
+                </div>
+                <div class="highlight-box">
+                    <div class="hl-number">94.8%</div>
+                    <div class="hl-title">Target Churn Recall</div>
+                    <p>At 0.30 decision threshold, captures over 94% of at-risk customers before churn occurs.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- TAB 3: ARCHITECTURE VIEW -->
+    <div id="architectureView" class="view-content">
+        <section class="card arch-card">
+            <div class="card-header">
+                <div>
+                    <h2>End-to-End Serverless ML Pipeline</h2>
+                    <p>Production deployment architecture on AWS Cloud infrastructure</p>
+                </div>
+                <div class="eval-tag">AWS Serverless Architecture</div>
+            </div>
+
+            <div class="architecture-diagram">
+                <div class="arch-step">
+                    <div class="step-num">1</div>
+                    <div class="step-icon">🌐</div>
+                    <h4>Web Dashboard</h4>
+                    <p>User inputs or CRM webhook sends customer telemetry</p>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">2</div>
+                    <div class="step-icon">⚡</div>
+                    <h4>Lambda Function URL</h4>
+                    <p>Direct HTTP REST endpoint with CORS & TLS encryption</p>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">3</div>
+                    <div class="step-icon">☁️</div>
+                    <h4>AWS Lambda Engine</h4>
+                    <p>Serverless Python runtime with memory caching</p>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">4</div>
+                    <div class="step-icon">🪣</div>
+                    <h4>Amazon S3 & ONNX</h4>
+                    <p>Serialized ONNX pipelines cached in <code>/tmp</code></p>
+                </div>
+                <div class="arch-arrow">➔</div>
+                <div class="arch-step">
+                    <div class="step-num">5</div>
+                    <div class="step-icon">📊</div>
+                    <h4>Prescriptive Output</h4>
+                    <p>Probability score, 3-tier risk level, and retention action playbook</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+        <div>
+            <span>ChurnGuard AI</span> • Developed by <strong>Uday Kumar Das</strong> • End-to-End MLOps Portfolio
+        </div>
+        <div class="footer-links">
+            <a href="https://github.com/U24day/ecommerce-churn-prediction" target="_blank" rel="noopener">GitHub Repository</a>
+            <span>•</span>
+            <a href="http://localhost:8000/docs" target="_blank" rel="noopener">FastAPI Swagger</a>
+        </div>
+    </footer>
+
+</div>
+
+<!-- Voucher Code Toast Notification -->
+<div id="toastNotification" class="toast-notification"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
