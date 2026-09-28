@@ -93,6 +93,78 @@ The `churn` column is the target variable.
 
 ---
 
+## Getting Started (Run Locally)
+
+### 1. Prerequisites
+
+- Python 3.11 or newer (verified on Python 3.14)
+- Git
+- (Optional) Docker, for the containerized API
+
+### 2. Clone and set up a virtual environment
+
+```bash
+git clone https://github.com/U24day/ecommerce-churn-prediction.git
+cd ecommerce-churn-prediction
+
+python3 -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+pip install -r requirements.txt
+```
+
+### 3. Start the FastAPI prediction API
+
+Run from the **project root** (the imports `api.app` and `src.predict` resolve from there):
+
+```bash
+uvicorn api.app:app --reload --host 0.0.0.0 --port 8000
+```
+
+- Swagger UI: http://localhost:8000/docs
+- Health check: http://localhost:8000/
+- Prediction endpoint: `POST http://localhost:8000/predict`
+
+### 4. Open the web dashboard
+
+The dashboard defaults to the deployed AWS Lambda endpoint and automatically falls back to `http://localhost:8000/predict` when the Lambda is unreachable. Serve the static files locally with:
+
+```bash
+cd web
+python3 -m http.server 5500
+```
+
+Then open http://localhost:5500 in your browser.
+
+To force the local API and skip the AWS Lambda attempt, edit `web/script.js`:
+
+```js
+let API_URL = LOCAL_API_URL;   // default is: AWS_LAMBDA_URL
+```
+
+### 5. Test the API
+
+```bash
+curl -X POST "http://localhost:8000/predict?threshold=0.30" \
+  -H "Content-Type: application/json" \
+  -d '{"customer_id":100001,"age":35,"gender":"Male","city":"Delhi","tenure_months":24,"avg_order_value":4500,"total_orders":120,"last_purchase_days_ago":180,"support_tickets":10,"subscription_type":"Gold"}'
+```
+
+### 6. Run the automated tests
+
+```bash
+pytest
+```
+
+### 7. Run with Docker (optional)
+
+```bash
+docker build -t churn-api .
+docker run -p 8000:8000 churn-api
+```
+
+---
+
 ## Machine Learning Workflow
 
 ```text
@@ -229,6 +301,30 @@ At the default classification threshold of `0.50`:
 | Recall | 31.17% |
 | F1 Score | 40.61% |
 | ROC-AUC | 67.93% |
+
+---
+
+## Model Benchmarking & Optimization Comparison
+
+To optimize latency, model file size, and recall on imbalanced churn data, 6 models were trained and benchmarked on the 200,000-customer dataset (80/20 stratified split):
+
+| Model | Train Time (s) | Artifact Size | Latency (1k req) | ROC-AUC | Recall (0.50) | Recall (0.30) | F1 (0.30) |
+|:---|---:|---:|---:|---:|---:|---:|---:|
+| **Logistic Regression** | 3.36s | < 1 MB | 0.09 ms | 0.6687 | 33.36% | 81.31% | 57.73% |
+| **Random Forest (Current)** | 6.49s | 49.21 MB | 26.41 ms | 0.6793 | 31.17% | 82.69% | 58.31% |
+| **Random Forest (Pruned)** | 2.25s | 3.65 MB | 13.55 ms | 0.6795 | **67.07%** | **96.39%** | 56.60% |
+| **LightGBM** | 0.88s | 0.50 MB | 1.60 ms | 0.6792 | **66.01%** | **94.48%** | 57.09% |
+| **XGBoost** | 0.50s | 0.40 MB | **1.14 ms** | 0.6796 | **66.16%** | **94.37%** | 57.06% |
+| **HistGradientBoosting** | 2.59s | **0.22 MB** | 2.33 ms | **0.6806** | **66.43%** | **94.86%** | 57.10% |
+
+### Key Benchmark Insights
+1. **Model Size Reduction (Up to 99.5%)**:
+   - Pruning Random Forest shrunk the artifact from **49.2 MB down to 3.65 MB** (93% reduction).
+   - Gradient boosted models (XGBoost/LightGBM/HistGB) reduced size to under **0.5 MB**, dramatically eliminating cold start download latency in serverless environments like AWS Lambda.
+2. **Inference Speed**:
+   - XGBoost provided the lowest inference latency at **1.14 ms per 1,000 samples** (over **23x faster** than the baseline Random Forest).
+3. **Class Imbalance & Recall**:
+   - Using class-weighted gradient boosting boosted baseline recall from **31.17% to 66%+**, capturing twice as many potential churners without aggressive manual threshold tuning.
 
 ---
 

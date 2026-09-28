@@ -5,7 +5,10 @@ import onnxruntime as ort
 import numpy as np
 
 
-BUCKET_NAME = "ecommerce-churn-ml-2026-u24day-210842713565-ap-south-1-an"
+BUCKET_NAME = os.environ.get(
+    "MODEL_BUCKET_NAME",
+    "ecommerce-churn-ml-2026-u24day-210842713565-ap-south-1-an"
+)
 
 MODEL_DIR = "/tmp/churn_models"
 PREPROCESSOR_PATH = os.path.join(MODEL_DIR, "preprocessor.onnx")
@@ -15,22 +18,30 @@ s3 = boto3.client("s3")
 
 
 def load_models():
-
     os.makedirs(MODEL_DIR, exist_ok=True)
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    parent_models_dir = os.path.join(os.path.dirname(current_dir), "models")
 
-    if not os.path.exists(PREPROCESSOR_PATH):
-        s3.download_file(
-            BUCKET_NAME,
-            "models/preprocessor.onnx",
-            PREPROCESSOR_PATH
-        )
+    for filename, target_path in [
+        ("preprocessor.onnx", PREPROCESSOR_PATH),
+        ("churn_model.onnx", MODEL_PATH)
+    ]:
+        if not os.path.exists(target_path):
+            local_same_dir = os.path.join(current_dir, filename)
+            local_models_dir = os.path.join(parent_models_dir, filename)
 
-    if not os.path.exists(MODEL_PATH):
-        s3.download_file(
-            BUCKET_NAME,
-            "models/churn_model.onnx",
-            MODEL_PATH
-        )
+            if os.path.exists(local_same_dir):
+                import shutil
+                shutil.copyfile(local_same_dir, target_path)
+            elif os.path.exists(local_models_dir):
+                import shutil
+                shutil.copyfile(local_models_dir, target_path)
+            else:
+                s3.download_file(
+                    BUCKET_NAME,
+                    f"models/{filename}",
+                    target_path
+                )
 
     preprocessor = ort.InferenceSession(PREPROCESSOR_PATH)
     model = ort.InferenceSession(MODEL_PATH)
@@ -43,60 +54,92 @@ preprocessor, model = load_models()
 
 def predict_churn(customer, threshold=0.30):
 
+    # Safe division guards against ZeroDivisionError
+    safe_tenure = max(float(customer.get("tenure_months", 1.0)), 1.0)
+    safe_orders = max(float(customer.get("total_orders", 1.0)), 1.0)
+
     total_spend = (
-        customer["avg_order_value"] *
-        customer["total_orders"]
+        float(customer["avg_order_value"]) *
+        float(customer["total_orders"])
     )
 
     orders_per_month = (
-        customer["total_orders"] /
-        customer["tenure_months"]
+        float(customer["total_orders"]) /
+        safe_tenure
     )
 
     support_tickets_per_order = (
-        customer["support_tickets"] /
-        customer["total_orders"]
+        float(customer["support_tickets"]) /
+        safe_orders
     )
 
     purchase_recency_ratio = (
-        customer["last_purchase_days_ago"] /
-        (customer["tenure_months"] * 30)
+        float(customer["last_purchase_days_ago"]) /
+        (safe_tenure * 30.0)
     )
 
     inputs = {
-        "age": np.array([[customer["age"]]], dtype=np.float32),
-        "gender": np.array([[customer["gender"]]]),
-        "city": np.array([[customer["city"]]]),
+        "age": np.array(
+            [[customer["age"]]],
+            dtype=np.float32
+        ),
+
+        "gender": np.array(
+            [[customer["gender"]]]
+        ),
+
+        "city": np.array(
+            [[customer["city"]]]
+        ),
+
         "tenure_months": np.array(
-            [[customer["tenure_months"]]], dtype=np.float32
+            [[customer["tenure_months"]]],
+            dtype=np.float32
         ),
+
         "avg_order_value": np.array(
-            [[customer["avg_order_value"]]], dtype=np.float32
+            [[customer["avg_order_value"]]],
+            dtype=np.float32
         ),
+
         "total_orders": np.array(
-            [[customer["total_orders"]]], dtype=np.float32
+            [[customer["total_orders"]]],
+            dtype=np.float32
         ),
+
         "last_purchase_days_ago": np.array(
-            [[customer["last_purchase_days_ago"]]], dtype=np.float32
+            [[customer["last_purchase_days_ago"]]],
+            dtype=np.float32
         ),
+
         "support_tickets": np.array(
-            [[customer["support_tickets"]]], dtype=np.float32
+            [[customer["support_tickets"]]],
+            dtype=np.float32
         ),
+
         "subscription_type": np.array(
             [[customer["subscription_type"]]]
         ),
+
         "total_spend": np.array(
-            [[total_spend]], dtype=np.float32
+            [[total_spend]],
+            dtype=np.float32
         ),
+
         "orders_per_month": np.array(
-            [[orders_per_month]], dtype=np.float32
+            [[orders_per_month]],
+            dtype=np.float32
         ),
+
         "support_tickets_per_order": np.array(
-            [[support_tickets_per_order]], dtype=np.float32
+            [[support_tickets_per_order]],
+            dtype=np.float32
         ),
+
         "purchase_recency_ratio": np.array(
-            [[purchase_recency_ratio]], dtype=np.float32
-        ),
+            [[purchase_recency_ratio]],
+            dtype=np.float32
+        )
     }
 
     processed = preprocessor.run(
@@ -106,7 +149,9 @@ def predict_churn(customer, threshold=0.30):
 
     label, probabilities = model.run(
         ["label", "probabilities"],
-        {"input": processed.astype(np.float32)}
+        {
+            "input": processed.astype(np.float32)
+        }
     )
 
     churn_probability = float(probabilities[0][1])
@@ -130,22 +175,83 @@ def predict_churn(customer, threshold=0.30):
     }
 
 
+RESPONSE_HEADERS = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type"
+}
+
+
 def lambda_handler(event, context):
 
     try:
 
+        # Detect HTTP method from Lambda Function URL
+        request_context = event.get("requestContext", {})
+        http_info = request_context.get("http", {})
+        method = http_info.get("method", "")
+
+        # Handle CORS preflight request
+        if method == "OPTIONS":
+            return {
+                "statusCode": 204,
+                "headers": RESPONSE_HEADERS,
+                "body": ""
+            }
+
+        # Browser GET request
+        if method == "GET":
+
+            return {
+                "statusCode": 200,
+                "headers": RESPONSE_HEADERS,
+                "body": json.dumps({
+                    "message": "E-Commerce Customer Churn Prediction API is running",
+                    "method": "POST",
+                    "endpoint": "/",
+                    "description": "Send customer data using POST request to get churn prediction"
+                })
+            }
+
+        # Handle POST request
+        if method == "POST":
+
+            body = event.get("body")
+
+            if not body:
+                return {
+                    "statusCode": 400,
+                    "headers": RESPONSE_HEADERS,
+                    "body": json.dumps({
+                        "error": "Request body is required"
+                    })
+                }
+
+            customer = json.loads(body)
+
+            result = predict_churn(customer)
+
+            return {
+                "statusCode": 200,
+                "headers": RESPONSE_HEADERS,
+                "body": json.dumps(result)
+            }
+
+        # Support direct Lambda test event
         if "body" in event:
+
             customer = json.loads(event["body"])
+
         else:
+
             customer = event
 
         result = predict_churn(customer)
 
         return {
             "statusCode": 200,
-            "headers": {
-                "Content-Type": "application/json"
-            },
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps(result)
         }
 
@@ -153,9 +259,7 @@ def lambda_handler(event, context):
 
         return {
             "statusCode": 500,
-            "headers": {
-                "Content-Type": "application/json"
-            },
+            "headers": RESPONSE_HEADERS,
             "body": json.dumps({
                 "error": str(e)
             })
